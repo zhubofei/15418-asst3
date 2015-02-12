@@ -8,4 +8,6 @@
 //MPI implementation of parallel sort here
 void parallelSort(float *data, float *&sortedData, int procs, int procId, size_t dataSize, size_t &localSize);
 
+void parallelSort_reference(float *data, float *&sortedData, int procs, int procId, size_t dataSize, size_t &localSize);
+
 #endif

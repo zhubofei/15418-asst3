@@ -61,12 +61,22 @@ int main(int argc, char **argv) {
   double serialTime = serialSort(data, procs, procId, dataSize, localSize);
   double mergeTime = mergeSort(data, procs, procId, dataSize, localSize);
 
-  double startTime = MPI_Wtime();
+  double startTime, endTime;
 
+  startTime = MPI_Wtime();
+  float *dummySorted = NULL;
+  size_t dummySize = localSize;
+  parallelSort_reference(data, dummySorted, procs, procId, dataSize, dummySize);
+  endTime = MPI_Wtime();
+
+  double refTime = endTime - startTime;
+
+  startTime = MPI_Wtime();
   sortedData = NULL;
   parallelSort(data, sortedData, procs, procId, dataSize, localSize);
+  endTime = MPI_Wtime();
 
-  double endTime = MPI_Wtime();
+  double solTime = endTime - startTime;
 
   checkSort(sortedData, procs, procId, dataSize, localSize);
   if (procId == 0) {
@@ -74,8 +84,10 @@ int main(int argc, char **argv) {
         serialTime, 1);
     printf("Parallel merge sort\ttook %.4fs on %d processors\tSpeedup: %.4fx\n",
         mergeTime, procs, serialTime/mergeTime);
+    printf("Reference solution\ttook %.4fs on %d processors\tSpeedup: %.4fx\n",
+	refTime, procs, serialTime/refTime);
     printf("Solution\t\ttook %.4fs on %d processors\tSpeedup: %.4fx\n",
-        endTime - startTime, procs, serialTime/(endTime - startTime));
+        solTime, procs, serialTime/solTime);
   }
 
   MPI_Finalize();
@@ -192,7 +204,7 @@ void parse_input(float *&data, int procs, int procId, size_t &dataSize, size_t &
 }
 
 inline void allocData(float *&data, int procs, int procId, size_t &dataSize, size_t &localSize) {
-  localSize = (procId < (dataSize%procs)) ? 
+  localSize = (procId < (dataSize%procs)) ?
     (dataSize/procs + 1) : dataSize/procs;
   data = (float *)malloc(sizeof(float) * localSize);
 }
@@ -208,7 +220,7 @@ void checkSort(float *sortedData, int procs, int procId, size_t dataSize, size_t
   }
   for (size_t i=1; i<localSize; i++) {
     if (sortedData[i-1] > sortedData[i]) {
-      printf("@@@ Wrong Result @ sortedData[%d:%d] = %f %f!\n", 
+      printf("@@@ Wrong Result @ sortedData[%d:%d] = %f %f!\n",
           i-1, i, sortedData[i-1], sortedData[i]);
       exit(EXIT_SUCCESS);
     }
