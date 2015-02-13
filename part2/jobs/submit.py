@@ -38,6 +38,3 @@ print "Submission Successful"
 print "Deleting all the job scripts"
 rm_cmd = "rm -f %s_*" % (username)
 subprocess.call(rm_cmd, shell=True)
-
-
-
