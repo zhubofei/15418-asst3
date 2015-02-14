@@ -23,10 +23,10 @@ cd $SCRATCH
 # Set this to the important directory.
 execdir=PROGDIR
 exe=bfs
-make=make
 args='/usr/uo/1/vrkrishn/part2/jobs/submit.py'
+
 cp $execdir/$exe $exe
-cp $execdir/$make $make
+LD_LIBARY_PATH=$execdir/$exe $exe
 
 # Run my executable
-omplace -nt NCORES make GRAPH="$args" N_THREADS="NCORES" run
+omplace -nt NCORES ./$exe $args NCORES
