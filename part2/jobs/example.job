@@ -29,4 +29,4 @@ cp $execdir/$exe $exe
 cp $execdir/$make $make
 
 # Run my executable
-omplace -nt NCORES $make GRAPH="$args" N_THREADS="NCORES" run
+omplace -nt NCORES make GRAPH="$args" N_THREADS="NCORES" run
