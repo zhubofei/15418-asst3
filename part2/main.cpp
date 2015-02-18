@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
             sprintf(ref_buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)     %.4f (%.4fx)\n",
                     assignment[i], ref_top_time, ref_top_base/ref_top_time, ref_bottom_time,
                     ref_bottom_base/ref_bottom_time, ref_hybrid_time, ref_hybrid_base/ref_hybrid_time);
-            sprintf(relative_buf, "%4d:   %.4f\%     %.4f\%     %.4f\%\n",
+            sprintf(relative_buf, "%4d:   %.2fp     %.2fp     %.2fp\n",
                     assignment[i], 100*top_time/ref_top_time, 100*bottom_time/ref_bottom_time, 100 * hybrid_time/ref_hybrid_time);
 
 #else
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
             sprintf(ref_buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)\n",
                     assignment[i], ref_top_time, ref_top_base/ref_top_time, ref_bottom_time,
                     ref_bottom_base/ref_bottom_time);
-            sprintf(relative_buf, "%4d:     %.2f        %.2f\n",
+            sprintf(relative_buf, "%4d:     %.2fp        %.2fp\n",
                     assignment[i], 100*top_time/ref_top_time, 100*bottom_time/ref_bottom_time);
 
 #endif
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
         if (!hs_check)
             std::cout << "Hybrid Search is not Correct" << std::endl;
 #endif
-        std::cout << std::endl << "Timing: " << std::endl << relative_timing.str();
+        std::cout << std::endl << "Timing: " << std::endl <<  relative_timing.str();
     }
     //Run the code with only one thread count and only report speedup
     else
