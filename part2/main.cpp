@@ -57,7 +57,6 @@ int main(int argc, char** argv) {
     printf("Graph stats:\n");
     printf("  Edges: %d\n", g.num_edges);
     printf("  Nodes: %d\n", g.num_nodes);
-    printf("----------------------------------------------------------\n");
 
     //If we want to run on all threads
     if (thread_count <= -1)
@@ -107,6 +106,10 @@ int main(int argc, char** argv) {
         solution sol3;
         sol3.distances = (int*)malloc(sizeof(int) * g.num_nodes);
 
+        //Solution sphere
+        solution sol4;
+        sol4.distances = (int*)malloc(sizeof(int) * g.num_nodes);
+
         double hybrid_base, top_base, bottom_base;
         double hybrid_time, top_time, bottom_time;
 
@@ -129,6 +132,7 @@ int main(int argc, char** argv) {
         //Loop through assignment values;
         for (int i = 0; i < n_usage; i++)
         {
+            printf("----------------------------------------------------------\n");
             std::cout << "Running with " << assignment[i] << " threads" << std::endl;
             //Set thread count
             omp_set_num_threads(assignment[i]);
@@ -140,8 +144,16 @@ int main(int argc, char** argv) {
 
             //Run reference implementation
             start = CycleTimer::currentSeconds();
-            reference_bfs_top_down(&g, &sol1);
+            reference_bfs_top_down(&g, &sol4);
             ref_top_time = CycleTimer::currentSeconds() - start;
+
+            std::cout << "Testing Correctness of Top Down\n";
+            for (int j=0; j<g.num_nodes; j++) {
+                if (sol1.distances[j] != sol4.distances[j]) {
+                    fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol1.distances[j], sol4.distances[j]);
+                    break;
+                }
+            }
 
             //Run implementations
             start = CycleTimer::currentSeconds();
@@ -150,8 +162,17 @@ int main(int argc, char** argv) {
 
             //Run reference implementation
             start = CycleTimer::currentSeconds();
-            reference_bfs_bottom_up(&g, &sol1);
+            reference_bfs_bottom_up(&g, &sol4);
             ref_bottom_time = CycleTimer::currentSeconds() - start;
+
+            std::cout << "Testing Correctness of Bottom Up\n";
+            for (int j=0; j<g.num_nodes; j++) {
+                if (sol2.distances[j] != sol4.distances[j]) {
+                    fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol2.distances[j], sol4.distances[j]);
+                    break;
+                }
+            }
+
 
 #ifdef USE_HYBRID_FUNCTION
             start = CycleTimer::currentSeconds();
@@ -160,8 +181,17 @@ int main(int argc, char** argv) {
 
             //Run reference implementation
             start = CycleTimer::currentSeconds();
-            reference_bfs_hybrid(&g, &sol1);
+            reference_bfs_hybrid(&g, &sol4);
             ref_hybrid_time = CycleTimer::currentSeconds() - start;
+
+            std::cout << "Testing Correctness of Hybrid\n";
+            for (int j=0; j<g.num_nodes; j++) {
+                if (sol3.distances[j] != sol4.distances[j]) {
+                    fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol3.distances[j], sol4.distances[j]);
+                    break;
+                }
+            }
+
 #endif
 
             if (i == 0)
@@ -203,26 +233,6 @@ int main(int argc, char** argv) {
             ref_timing << ref_buf;
         }
 
-        printf("----------------------------------------------------------\n");
-        std::cout << "Correctness" << std::endl;
-
-        std::cout << "Testing Correctness of Top Down / Bottom Up\n";
-        for (int i=0; i<g.num_nodes; i++) {
-            if (sol1.distances[i] != sol2.distances[i]) {
-                fprintf(stderr, "*** Results disagree at %d: %d, %d\n", i, sol1.distances[i], sol2.distances[i]);
-                exit(1);
-            }
-        }
-#ifdef USE_HYBRID_FUNCTION
-        std::cout << "Testing Correctness of Top Down / Hybrid\n";
-        for (int i=0; i<g.num_nodes; i++) {
-            if (sol1.distances[i] != sol3.distances[i]) {
-                fprintf(stderr, "*** Results disagree at %d: %d, %d\n", i, sol1.distances[i], sol3.distances[i]);
-                exit(1);
-            }
-        }
-#endif
-        std::cout << "Correctness Test Passed\n";
         printf("----------------------------------------------------------\n");
         std::cout << "Timing Summary" << std::endl;
         std::cout << timing.str();
