@@ -254,7 +254,7 @@ int main(int argc, char** argv) {
         std::cout << "Reference Summary" << std::endl;
         std::cout << ref_timing.str();
         printf("----------------------------------------------------------\n");
-        std::cout << "For grading reference" << std::endl << std::endl;
+        std::cout << "For grading reference (based on execution times)" << std::endl << std::endl;
         std::cout << "Correctness: " << std::endl;
         if (!tds_check)
             std::cout << "Top Down Search is not Correct" << std::endl;
@@ -269,8 +269,17 @@ int main(int argc, char** argv) {
     //Run the code with only one thread count and only report speedup
     else
     {
+        bool tds_check = true, bus_check = true, hs_check = true;
         solution sol1;
         sol1.distances = (int*)malloc(sizeof(int) * g.num_nodes);
+        solution sol2;
+        sol2.distances = (int*)malloc(sizeof(int) * g.num_nodes);
+        solution sol3;
+        sol3.distances = (int*)malloc(sizeof(int) * g.num_nodes);
+
+        //Solution sphere
+        solution sol4;
+        sol4.distances = (int*)malloc(sizeof(int) * g.num_nodes);
 
         double hybrid_time, top_time, bottom_time;
         double ref_hybrid_time, ref_top_time, ref_bottom_time;
@@ -300,28 +309,58 @@ int main(int argc, char** argv) {
 
         //Run reference implementation
         start = CycleTimer::currentSeconds();
-        reference_bfs_top_down(&g, &sol1);
+        reference_bfs_top_down(&g, &sol4);
         ref_top_time = CycleTimer::currentSeconds() - start;
+
+        std::cout << "Testing Correctness of Top Down\n";
+        for (int j=0; j<g.num_nodes; j++) {
+            if (sol1.distances[j] != sol4.distances[j]) {
+                fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol1.distances[j], sol4.distances[j]);
+                tds_check = false;
+                break;
+            }
+        }
+
 
         //Run implementations
         start = CycleTimer::currentSeconds();
-        bfs_bottom_up(&g, &sol1);
+        bfs_bottom_up(&g, &sol2);
         bottom_time = CycleTimer::currentSeconds() - start;
 
         //Run reference implementation
         start = CycleTimer::currentSeconds();
-        reference_bfs_bottom_up(&g, &sol1);
+        reference_bfs_bottom_up(&g, &sol4);
         ref_bottom_time = CycleTimer::currentSeconds() - start;
+
+        std::cout << "Testing Correctness of Bottom Up\n";
+        for (int j=0; j<g.num_nodes; j++) {
+            if (sol2.distances[j] != sol4.distances[j]) {
+                fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol2.distances[j], sol4.distances[j]);
+                bus_check = false;
+                break;
+            }
+        }
+
 
 #ifdef USE_HYBRID_FUNCTION
         start = CycleTimer::currentSeconds();
-        bfs_hybrid(&g, &sol1);
+        bfs_hybrid(&g, &sol3);
         hybrid_time = CycleTimer::currentSeconds() - start;
 
         //Run reference implementation
         start = CycleTimer::currentSeconds();
-        reference_bfs_hybrid(&g, &sol1);
+        reference_bfs_hybrid(&g, &sol4);
         ref_hybrid_time = CycleTimer::currentSeconds() - start;
+
+        std::cout << "Testing Correctness of Hybrid\n";
+        for (int j=0; j<g.num_nodes; j++) {
+            if (sol3.distances[j] != sol4.distances[j]) {
+                fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol3.distances[j], sol4.distances[j]);
+                hs_check = false;
+                break;
+            }
+        }
+
 #endif
 
         char buf[1024];
@@ -342,6 +381,14 @@ int main(int argc, char** argv) {
 #endif
         timing << buf;
         ref_timing << ref_buf;
+        if (!tds_check)
+            std::cout << "Top Down Search is not Correct" << std::endl;
+        if (!bus_check)
+            std::cout << "Bottom Up Search is not Correct" << std::endl;
+#ifdef USE_HYBRID_FUNCTION
+        if (!hs_check)
+            std::cout << "Hybrid Search is not Correct" << std::endl;
+#endif
         printf("----------------------------------------------------------\n");
         std::cout << "Timing Summary" << std::endl;
         std::cout << timing.str();
