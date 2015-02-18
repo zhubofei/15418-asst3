@@ -119,14 +119,20 @@ int main(int argc, char** argv) {
         double start;
         std::stringstream timing;
         std::stringstream ref_timing;
+        std::stringstream relative_timing;
+
+        bool tds_check = true, bus_check = true, hs_check = true;
 
 #ifdef USE_HYBRID_FUNCTION
         timing << "Threads  Top Down              Bottom Up             Hybrid\n";
         ref_timing << "Threads  Top Down              Bottom Up             Hybrid\n";
+        relative_timing << "Threads  Top Down       Bottom Up       Hybrid\n";
 
 #else
         timing << "Threads  Top Down              Bottom Up\n";
         ref_timing << "Threads  Top Down              Bottom Up\n";
+        relative_timing << "Threads  Top Down       Bottom Up\n";
+
 
 #endif
         //Loop through assignment values;
@@ -151,6 +157,7 @@ int main(int argc, char** argv) {
             for (int j=0; j<g.num_nodes; j++) {
                 if (sol1.distances[j] != sol4.distances[j]) {
                     fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol1.distances[j], sol4.distances[j]);
+                    tds_check = false;
                     break;
                 }
             }
@@ -169,6 +176,7 @@ int main(int argc, char** argv) {
             for (int j=0; j<g.num_nodes; j++) {
                 if (sol2.distances[j] != sol4.distances[j]) {
                     fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol2.distances[j], sol4.distances[j]);
+                    bus_check = false;
                     break;
                 }
             }
@@ -188,6 +196,7 @@ int main(int argc, char** argv) {
             for (int j=0; j<g.num_nodes; j++) {
                 if (sol3.distances[j] != sol4.distances[j]) {
                     fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol3.distances[j], sol4.distances[j]);
+                    hs_check = false;
                     break;
                 }
             }
@@ -210,6 +219,7 @@ int main(int argc, char** argv) {
 
             char buf[1024];
             char ref_buf[1024];
+            char relative_buf[1024];
 
 #ifdef USE_HYBRID_FUNCTION
             sprintf(buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)     %.4f (%.4fx)\n",
@@ -218,19 +228,23 @@ int main(int argc, char** argv) {
             sprintf(ref_buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)     %.4f (%.4fx)\n",
                     assignment[i], ref_top_time, ref_top_base/ref_top_time, ref_bottom_time,
                     ref_bottom_base/ref_bottom_time, ref_hybrid_time, ref_hybrid_base/ref_hybrid_time);
+            sprintf(relative_buf, "%4d:   %.4f\%     %.4f\%     %.4f\%\n",
+                    assignment[i], 100*top_time/ref_top_time, 100*bottom_time/ref_bottom_time, 100 * hybrid_time/ref_hybrid_time);
 
 #else
             sprintf(buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)\n",
                     assignment[i], top_time, top_base/top_time, bottom_time,
                     bottom_base/bottom_time);
-
-             sprintf(ref_buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)\n",
+            sprintf(ref_buf, "%4d:   %.4f (%.4fx)     %.4f (%.4fx)\n",
                     assignment[i], ref_top_time, ref_top_base/ref_top_time, ref_bottom_time,
                     ref_bottom_base/ref_bottom_time);
+            sprintf(relative_buf, "%4d:     %.2f        %.2f\n",
+                    assignment[i], 100*top_time/ref_top_time, 100*bottom_time/ref_bottom_time);
 
 #endif
             timing << buf;
             ref_timing << ref_buf;
+            relative_timing << relative_buf;
         }
 
         printf("----------------------------------------------------------\n");
@@ -240,6 +254,17 @@ int main(int argc, char** argv) {
         std::cout << "Reference Summary" << std::endl;
         std::cout << ref_timing.str();
         printf("----------------------------------------------------------\n");
+        std::cout << "For grading reference" << std::endl << std::endl;
+        std::cout << "Correctness: " << std::endl;
+        if (!tds_check)
+            std::cout << "Top Down Search is not Correct" << std::endl;
+        if (!bus_check)
+            std::cout << "Bottom Up Search is not Correct" << std::endl;
+#ifdef USE_HYBRID_FUNCTION
+        if (!hs_check)
+            std::cout << "Hybrid Search is not Correct" << std::endl;
+#endif
+        std::cout << std::endl << "Timing: " << std::endl << relative_timing.str();
     }
     //Run the code with only one thread count and only report speedup
     else
