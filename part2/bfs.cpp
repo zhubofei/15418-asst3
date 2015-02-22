@@ -110,4 +110,7 @@ void bfs_top_down(graph* graph, solution* sol) {
         frontier = new_frontier;
         new_frontier = tmp;
     }
+
+    free(frontier->present);
+    free(new_frontier->present);
 }

@@ -85,12 +85,12 @@ int main(int argc, char** argv) {
         else {
             if (max_threads < 6)
             {
-                int temp[n_usage];
+                int *temp = (int*) malloc(max_threads * sizeof(int));
                 for (int i = 0; i < n_usage; i++)
                     temp[i] = i+1;
                 assignment = temp;
             } else {
-                int temp[6];
+                int *temp = (int*) malloc(6 * sizeof(int));
                 temp[0] = 1;
                 temp[5] = max_threads;
                 for (int i = 1; i < 5; i++)
