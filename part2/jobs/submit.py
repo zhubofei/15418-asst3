@@ -2,6 +2,8 @@ import subprocess
 import re
 import os, sys
 
+core_counts = [1, 2, 4, 8, 16, 32]
+
 if len(sys.argv) < 2:
   print "need the path to the graph"
   sys.exit(1)
@@ -30,7 +32,7 @@ subprocess.call("mv example.job old_example.job", shell=True)
 subprocess.call("mv tmp.job example.job", shell=True)
 subprocess.call("rm tmp.job -f", shell=True)
 
-for i in [1,2,4,8,16,32, 64, 128]:
+for i in core_counts:
   subprocess.call("./generate_job.sh %d" % (i), shell=True)
   subprocess.call("qsub %s_%d.job" % (username, i), shell=True)
 
