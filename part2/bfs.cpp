@@ -24,17 +24,7 @@ void vertex_set_init(vertex_set* list, int count) {
 
 void bfs_bottom_up(graph* graph, solution* sol)
 {
-    // 15-418/618 students:
-    //
-    // You will need to implement the "bottom up" BFS here as
-    // described in the handout.
-    //
-    // As a result of your code's execution, sol.distances should be
-    // correctly populated for all nodes in the graph.
-    //
-    // As was done in the top-down case, you may wish to organize your
-    // code by creating subroutine bottom_up_step() that is called in
-    // each step of the BFS process.
+
 }
 
 
@@ -45,9 +35,10 @@ void top_down_step(
     graph* g,
     vertex_set* frontier,
     vertex_set* new_frontier,
-    int* distances)
+    int* distances,
+    int step)
 {
-
+    #pragma omp parallel for
     for (int i=0; i<frontier->count; i++) {
 
         int node = frontier->present[i];
@@ -55,14 +46,28 @@ void top_down_step(
         int start_edge = g->outgoing_starts[node];
         int end_edge = (node == g->num_nodes-1) ? g->num_edges : g->outgoing_starts[node+1];
 
-        // attempt to add all neighbors to the new frontier
-        for (int neighbor=start_edge; neighbor<end_edge; neighbor++) {
-            int outgoing = g->outgoing_edges[neighbor];
+        // attempt to add all neighbors to the new frontier if end_edge > start_edge
+        if (end_edge > start_edge) {
+            int new_outgoings[end_edge - start_edge];
+            int count = 0;
 
-            if (distances[outgoing] == NOT_VISITED_MARKER) {
-                distances[outgoing] = distances[node] + 1;
-                int index = new_frontier->count++;
-                new_frontier->present[index] = outgoing;
+            for (int neighbor=start_edge; neighbor<end_edge; neighbor++) {
+                int outgoing = g->outgoing_edges[neighbor];
+
+                if (distances[outgoing] == NOT_VISITED_MARKER) {
+                    distances[outgoing] = step;
+                    new_outgoings[count++] = outgoing;
+                }
+            }
+
+            if (count > 0) {
+              int index;
+              do {
+                index = new_frontier->count;
+              } while(!__sync_bool_compare_and_swap(&new_frontier->count, index, index+count));
+
+              for(int i=0; i < count; i++)
+                new_frontier->present[index + i] = new_outgoings[i];
             }
         }
     }
@@ -83,14 +88,20 @@ void bfs_top_down(graph* graph, solution* sol) {
     vertex_set* new_frontier = &list2;
 
     // initialize all nodes to NOT_VISITED
-    for (int i=0; i<graph->num_nodes; i++)
+    // parallel for
+    #pragma omp parallel for
+    for (int i=0; i<graph->num_nodes; i++) {
         sol->distances[i] = NOT_VISITED_MARKER;
+    }
 
     // setup frontier with the root node
     frontier->present[frontier->count++] = ROOT_NODE_ID;
     sol->distances[ROOT_NODE_ID] = 0;
 
+    int step = 0;
+
     while (frontier->count != 0) {
+        step++;
 
 #ifdef DEBUG
         double start_time = CycleTimer::currentSeconds();
@@ -98,7 +109,7 @@ void bfs_top_down(graph* graph, solution* sol) {
 
         vertex_set_clear(new_frontier);
 
-        top_down_step(graph, frontier, new_frontier, sol->distances);
+        top_down_step(graph, frontier, new_frontier, sol->distances, step);
 
 #ifdef DEBUG
         double end_time = CycleTimer::currentSeconds();
