@@ -10,7 +10,7 @@
 
 #define ROOT_NODE_ID 0
 #define NOT_VISITED_MARKER -1
-#define SPAN 1000
+#define SPAN 3200
 
 void vertex_set_clear(vertex_set* list) {
     list->count = 0;
@@ -22,6 +22,7 @@ void vertex_set_init(vertex_set* list, int count) {
     vertex_set_clear(list);
 }
 
+<<<<<<< HEAD
 void bfs_hybrid(graph* graph, solution* sol){
 	int N = graph->num_nodes;
 
@@ -75,6 +76,8 @@ void bfs_hybrid(graph* graph, solution* sol){
   }
 }
 
+=======
+>>>>>>> origin/part2
 void bottom_up_step(
     graph* g,
     vertex_set* frontier,
@@ -87,37 +90,32 @@ void bottom_up_step(
     for (int i=0; i < N; i+=SPAN) {
       int new_outgoings[SPAN];
   		int count = 0;
-  		int node_index;
-
   		for(int j=0; j<SPAN; j++){
-  			node_index = i+j;
-
-  			if(node_index < N && distances[node_index] == NOT_VISITED_MARKER){
-  				int start_edge = g->incoming_starts[node_index];
-  				int end_edge = (node_index < g->num_nodes-1) ? g->incoming_starts[node_index+1] : g->num_edges;
-
+  			int node = i+j;
+  			if(node < N && distances[node] == NOT_VISITED_MARKER){
+  				int start_edge = g->incoming_starts[node];
+  				int end_edge = (node == N - 1) ? g->num_edges : g->incoming_starts[node+1];
   				for (int p=start_edge; p<end_edge; p++) {
   					int incoming = g->incoming_edges[p];
-
   					if (distances[incoming] == step-1) {
-  						distances[node_index] = step;
-
-  						new_outgoings[count++] = node_index;
-
+  						distances[node] = step;
+  						new_outgoings[count++] = node;
   						break;
   					}
   				}
-  			}
+  			} else if (node >= N) {
+          break;
+        }
   		}
 
-  		if(count>0){
+  		if(count > 0){
         int index;
-  			do{
+  			do {
   				index = new_frontier->count;
   			} while(!__sync_bool_compare_and_swap(&new_frontier->count, index, index+count));
 
-  			for(int i=0;i<count;i++){
-  				new_frontier->present[index+i] = new_outgoings[i];
+  			for (int j=0; j<count; j++) {
+  				new_frontier->present[index+j] = new_outgoings[j];
   			}
   		}
     }
@@ -149,18 +147,8 @@ void bfs_bottom_up(graph* graph, solution* sol)
   while (frontier->count != 0) {
       step++;
 
-  #ifdef DEBUG
-      double start_time = CycleTimer::currentSeconds();
-  #endif
-
       vertex_set_clear(new_frontier);
-
       bottom_up_step(graph, frontier, new_frontier, sol->distances, step);
-
-  #ifdef DEBUG
-      double end_time = CycleTimer::currentSeconds();
-      printf("frontier=%-10d %.4f sec\n", frontier->count, end_time - start_time);
-  #endif
 
       // swap pointers
       vertex_set* new_outgoings = frontier;
