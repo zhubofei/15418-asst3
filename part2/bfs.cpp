@@ -22,7 +22,60 @@ void vertex_set_init(vertex_set* list, int count) {
     vertex_set_clear(list);
 }
 
-void bottom_up_step_omp(
+void bfs_hybrid(graph* graph, solution* sol){
+	int N = graph->num_nodes;
+
+	vertex_set list1;
+  vertex_set list2;
+  vertex_set_init(&list1, totalNodes);
+  vertex_set_init(&list2, totalNodes);
+
+  vertex_set* frontier = &list1;
+  vertex_set* new_frontier = &list2;
+
+  // initialize all nodes to NOT_VISITED
+	#pragma omp parallel for
+  for (int i=0; i<N; i++)
+      sol->distances[i] = NOT_VISITED_MARKER;
+
+  // setup frontier with the root node
+  frontier->present[frontier->count++] = ROOT_NODE_ID;
+  sol->distances[ROOT_NODE_ID] = 0;
+
+	int step = 0;
+	while (frontier->count != 0) {
+
+    vertex_set_clear(new_frontier);
+		step++;
+
+		// set 10 to be the threshold ratio between total nodes and frontier node counts,
+    // go to bottom-up method, otherwise go to top-down method
+		if(frontier->count * 10 < N) {
+			//the frontier size is small, use top-down method
+			top_down_step(
+				graph,
+				frontier,
+				new_frontier,
+				sol->distances,
+				step);
+		} else {
+			//the frontier size of large, use bottom-up method
+			bottom_up_step(
+				graph,
+				frontier,
+				new_frontier,
+				sol->distances,
+				step);
+		}
+
+    // swap pointers
+    vertex_set* tmp = frontier;
+    frontier = new_frontier;
+    new_frontier = tmp;
+  }
+}
+
+void bottom_up_step(
     graph* g,
     vertex_set* frontier,
     vertex_set* new_frontier,
