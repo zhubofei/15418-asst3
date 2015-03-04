@@ -22,13 +22,17 @@ void vertex_set_init(vertex_set* list, int count) {
     vertex_set_clear(list);
 }
 
+// declare function in the front
+void top_down_step(graph*, vertex_set*, vertex_set*, int*, int);
+void bottom_up_step(graph*, vertex_set*, vertex_set*, int*, int);
+
 void bfs_hybrid(graph* graph, solution* sol){
 	int N = graph->num_nodes;
 
 	vertex_set list1;
   vertex_set list2;
-  vertex_set_init(&list1, totalNodes);
-  vertex_set_init(&list2, totalNodes);
+  vertex_set_init(&list1, N);
+  vertex_set_init(&list2, N);
 
   vertex_set* frontier = &list1;
   vertex_set* new_frontier = &list2;

@@ -1,7 +1,7 @@
 #ifndef __BFS_H__
 #define __BFS_H__
 
-//#define USE_HYBRID_FUNCTION
+#define USE_HYBRID_FUNCTION
 //#define DEBUG
 
 struct graph;
