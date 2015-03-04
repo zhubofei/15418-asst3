@@ -22,7 +22,6 @@ void vertex_set_init(vertex_set* list, int count) {
     vertex_set_clear(list);
 }
 
-<<<<<<< HEAD
 void bfs_hybrid(graph* graph, solution* sol){
 	int N = graph->num_nodes;
 
@@ -76,8 +75,6 @@ void bfs_hybrid(graph* graph, solution* sol){
   }
 }
 
-=======
->>>>>>> origin/part2
 void bottom_up_step(
     graph* g,
     vertex_set* frontier,
