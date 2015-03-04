@@ -11,6 +11,7 @@
 #define ROOT_NODE_ID 0
 #define NOT_VISITED_MARKER -1
 #define SPAN 1000
+#define DIVIDER 2
 
 void vertex_set_clear(vertex_set* list) {
     list->count = 0;
@@ -32,14 +33,17 @@ void bottom_up_step(
 {
     int N = not_visited->count;
     #pragma omp parallel for
-    for (int i=0; i < N; i+=SPAN) {
+    for (int i=0; i < N; i += SPAN) {
       int new_outgoings[SPAN];
   		int count = 0;
   		for(int j=0; j<SPAN; j++){
   			int index = i + j;
         if (index < N) {
-          int node = not_visited->present[index];
-  				int start_edge = g->incoming_starts[node];
+          int node = index;
+          //if (N < g->num_nodes)
+            //node = not_visited->present[index];
+
+          int start_edge = g->incoming_starts[node];
   				int end_edge = (node == g->num_nodes-1) ? g->num_edges : g->incoming_starts[node+1];
 
   				for (int p=start_edge; p<end_edge; p++) {
@@ -62,15 +66,15 @@ void bottom_up_step(
   				index = new_frontier->count;
   			} while(!__sync_bool_compare_and_swap(&new_frontier->count, index, index+count));
 
-  			for(int i=0;i<count;i++){
+  			for(int i=0; i<count; i++){
   				new_frontier->present[index+i] = new_outgoings[i];
   			}
   		}
     }
 }
 
-void gen_not_visited(int N, vertex_set* not_visited,
-                      vertex_set* tmp, int* distances) {
+void gen_not_visited(vertex_set* not_visited,
+                     vertex_set* tmp, int* distances) {
   // should use prefix sum for better performance
   int count = 0;
   for (int i=0; i < not_visited->count; i++) {
@@ -116,16 +120,20 @@ void bfs_bottom_up(graph* graph, solution* sol)
   frontier->present[frontier->count++] = ROOT_NODE_ID;
   sol->distances[ROOT_NODE_ID] = 0;
 
+  int visited_count = 1;
   int step = 0;
 
   while (frontier->count != 0) {
       step++;
 
-      gen_not_visited(graph->num_nodes, not_visited, new_not_visited, sol->distances);
-      // swap pointers
-      vertex_set* tmp = not_visited;
-      vertex_set* not_visited = new_not_visited;
-      vertex_set* new_not_visited = tmp;
+      /*if (visited_count > (graph->num_nodes / DIVIDER) || visited_count == 1) {
+        gen_not_visited(not_visited, new_not_visited, sol->distances);
+
+        // swap pointers
+        vertex_set* tmp = not_visited;
+        not_visited = new_not_visited;
+        new_not_visited = tmp;
+      }*/
 
       vertex_set_clear(new_frontier);
       bottom_up_step(graph, frontier, new_frontier, not_visited, sol->distances, step);
@@ -138,7 +146,7 @@ void bfs_bottom_up(graph* graph, solution* sol)
   free(frontier->present);
   free(new_frontier->present);
   free(not_visited->present);
-  free(new_not_visited->present);
+  //free(new_not_visited->present);
 }
 
 
